@@ -148,38 +148,41 @@
 
     textarea { min-height: 70px; resize: vertical; }
     input[type="file"] { font-size: 12px; color: #94a3b8; }
-    input[type="range"] { width: 100%; accent-color: #4ecdc4; cursor: pointer; }
-
-    .range-row {
-      display: grid;
-      grid-template-columns: 1fr 40px;
-      gap: 10px;
-      align-items: center;
-    }
-    .range-value { font-size: 12px; font-weight: bold; text-align: right; }
-
-    /* Custom Chips for Buttons */
-    .chips {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-    }
-    .chip {
-      background: rgba(255,255,255,.05);
-      border: 1px solid rgba(255,255,255,.2);
-      color: #e2e8f0;
-      padding: 6px 12px;
-      border-radius: 6px;
-      font-size: 13px;
-      font-weight: 600;
+    /* ===== 覆蓋從這裡開始 ===== */
+    input[type="range"] {
+      -webkit-appearance: none;
+      appearance: none; /* 新增標準屬性以提升相容性 */
+      width: 100%;
+      height: 8px;
+      border-radius: 4px;
+      /* 滑桿改為彩色漸層 */
+      background: linear-gradient(90deg, #ff7eb3, #ff758c, #ffdb58, #4facfe, #00f2fe);
+      outline: none;
       cursor: pointer;
-      transition: all .2s;
     }
-    .chip:hover { background: rgba(255,255,255,.1); }
-    .chip.active {
-      background: #4ecdc4;
-      color: #000;
-      border-color: #4ecdc4;
+    
+    /* 替換圓鈕為上傳的 2.jpg 圖片 */
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      background-image: url('2.jpg'); /* 你的圖片檔名 */
+      background-size: cover;
+      background-position: center;
+      border: 2px solid #fff;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.6);
+    }
+    input[type="range"]::-moz-range-thumb {
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      background-image: url('2.jpg');
+      background-size: cover;
+      background-position: center;
+      border: 2px solid #fff;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.6);
     }
 
     .button-row {
@@ -189,20 +192,68 @@
       margin-top: 20px;
     }
 
+    /* ===== 覆蓋主按鈕樣式 ===== */
     .btn {
-      border: none;
-      border-radius: 8px;
+      border: none; 
+      border-radius: 8px; /* 符合你圖片中的微圓角 */
       padding: 12px;
       cursor: pointer;
-      color: white;
-      font-size: 13px;
+      font-size: 14px;
       font-weight: bold;
-      transition: opacity .2s;
+      transition: all .2s;
     }
-    .btn:hover { opacity: 0.9; }
-    .btn.primary { background: #d92c2c; }
-    .btn.secondary { background: #4ecdc4; color: #000; }
-    .btn.ghost { background: transparent; border: 1px solid rgba(255,255,255,.3); }
+    
+    .btn:hover { 
+      transform: translateY(-2px); 
+      box-shadow: 0 4px 8px rgba(0,0,0,0.4); 
+    }
+    
+    /* 根據你的截圖調整顏色 */
+    .btn.primary { 
+      background: #d53032; /* 紅色：儲存PNG */
+      color: white; 
+    }
+    .btn.secondary { 
+      background: #50d2c2; /* 湖水綠：重設頭貼 */
+      color: #111; 
+    }
+    .btn.ghost { 
+      background: #1e1e1e; /* 深灰底：全部重設 */
+      color: #fff; 
+      border: 1px solid #555; 
+    }
+
+    /* ===== 新增人名按鈕 (Chip) 樣式 ===== */
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    
+    .chip {
+      /* 預設狀態：淺灰底、黑字 (符合你上傳的截圖) */
+      background: #f0f0f0; 
+      border: 1px solid #ccc;
+      color: #111; 
+      padding: 6px 14px;
+      border-radius: 4px; /* 微圓角 */
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all .2s;
+    }
+    
+    .chip:hover { 
+      background: #e0e0e0; 
+    }
+    
+    .chip.active {
+      /* 點擊後的狀態：彩色漸層背景 */
+      background: linear-gradient(90deg, #ff7eb3, #ff758c, #ffdb58, #4facfe, #00f2fe);
+      color: #000;
+      border-color: transparent; 
+      font-weight: bold;
+    }
 
     .status {
       margin-top: 10px;
@@ -330,13 +381,25 @@
 
         <div class="section">
           <h3>乘客肖像</h3>
-          <div class="field">
-            <label for="bgUpload">上傳背景 (選填)</label>
-            <input id="bgUpload" type="file" accept="image/*" />
-          </div>
-          <div class="field">
-            <label for="portraitUpload">上傳人物 PNG</label>
-            <input id="portraitUpload" type="file" accept="image/*" />
+          <div class="grid-2">
+            <div class="field">
+              <label for="portraitUpload">上傳人物 PNG</label>
+              <input id="portraitUpload" type="file" accept="image/*" />
+            </div>
+            <div class="field">
+              <label for="imageFilter">圖片風格轉換</label>
+              <select id="imageFilter">
+                <option value="none">原圖 (None)</option>
+                <option value="retro-pixel">復古像素 (Retro Pixel)</option>
+                <option value="visor">熱成像 (V.I.S.O.R.)</option>
+                <option value="risograph">雙色印刷 (2C Print)</option>
+                <option value="halftone">半色調網點 (Halftone)</option>
+                <option value="vaporwave">蒸氣波 (Vaporwave)</option>
+                <option value="glitch">影像故障 (Glitch)</option>
+                <option value="manga">漫畫風格 (Manga)</option>
+                <option value="pop-art">普普藝術 (Pop Art)</option>
+              </select>
+            </div>
           </div>
           
           <div class="grid-2" style="margin-top: 10px;">
@@ -373,7 +436,7 @@
 
         <div class="button-row">
           <button class="btn primary" id="saveBtn">儲存 PNG</button>
-          <button class="btn secondary" id="resetPortraitBtn">重設肖像</button>
+          <button class="btn secondary" id="resetPortraitBtn">重設頭貼</button>
           <button class="btn ghost" id="resetAllBtn">全部重設</button>
         </div>
         <div class="status" id="status"></div>
@@ -393,10 +456,10 @@
     
     // UI Elements
     const ids = [
-      'mode', 'visualTheme', 'primaryName', 'age', 'ticketClass', 'time', 'reason', 
-      'visitPerson', 'secretTitle', 'secretNote', 'warningNote',
-      'portraitX', 'portraitY', 'portraitScale', 'portraitOpacity'
-    ];
+    'mode', 'visualTheme', 'primaryName', 'age', 'ticketClass', 'time', 'reason', 
+    'visitPerson', 'secretTitle', 'secretNote', 'warningNote',
+    'portraitX', 'portraitY', 'portraitScale', 'portraitOpacity', 'imageFilter'
+  ];
     const elements = Object.fromEntries(ids.map(id => [id, document.getElementById(id)]));
     const personChips = document.querySelectorAll('#personChips .chip');
     
@@ -405,7 +468,6 @@
     const statusEl = document.getElementById('status');
 
     let portraitImg = null;
-    let bgImg = null;
     let renderTimer = null;
 
     // Constants for drawing
@@ -574,24 +636,38 @@
       ctx.beginPath();
       ctx.rect(portX+2, portY+2, portW-4, portH-4);
       ctx.clip();
-      
-      if (bgImg) {
-        // center crop bg
-        const ratio = Math.max(portW / bgImg.width, portH / bgImg.height);
-        ctx.drawImage(bgImg, portX + (portW - bgImg.width*ratio)/2, portY + (portH - bgImg.height*ratio)/2, bgImg.width*ratio, bgImg.height*ratio);
-      }
 
+      // ===== 搜尋並替換這段 =====
       if (portraitImg) {
         const s = elements.portraitScale.value / 100;
         const px = elements.portraitX.value * 1;
         const py = elements.portraitY.value * 1;
         const baseW = portW * 0.9 * s;
         const baseH = (portraitImg.height / portraitImg.width) * baseW;
+        
+        // 套用風格轉換濾鏡
+        const filter = elements.imageFilter.value;
+        switch(filter) {
+          case 'retro-pixel': ctx.filter = 'contrast(1.2) saturate(1.5)'; break;
+          case 'visor': ctx.filter = 'hue-rotate(90deg) saturate(3) invert(0.8)'; break;
+          case 'risograph': ctx.filter = 'sepia(1) hue-rotate(320deg) saturate(2) contrast(1.2)'; break;
+          case 'vaporwave': ctx.filter = 'hue-rotate(280deg) saturate(2) contrast(1.2)'; break;
+          case 'glitch': ctx.filter = 'hue-rotate(45deg) saturate(3) contrast(1.5)'; break;
+          case 'manga': ctx.filter = 'grayscale(1) contrast(2) brightness(1.2)'; break;
+          case 'pop-art': ctx.filter = 'contrast(1.5) saturate(2.5)'; break;
+          case 'halftone': ctx.filter = 'grayscale(1) contrast(1.5)'; break; // 簡易黑白網點感
+          default: ctx.filter = 'none';
+        }
+
         ctx.globalAlpha = elements.portraitOpacity.value / 100;
         ctx.drawImage(portraitImg, portX + portW/2 - baseW/2 + px, portY + portH - baseH + py, baseW, baseH);
+        
+        // 畫完重設濾鏡與透明度
+        ctx.filter = 'none';
         ctx.globalAlpha = 1.0;
       }
       ctx.restore();
+      // ===== 替換到這行結束 =====
 
       // Portrait Bottom Label
       ctx.fillStyle = blackColor;
@@ -725,7 +801,7 @@
       // Text next to pill
       ctx.fillStyle = redColor;
       ctx.textAlign = 'left';
-      ctx.fillText("車掌機密備註         CONFIDENTIAL", BORDER + 74, botY + 12);
+      ctx.fillText("車掌機密備註        CONFIDENTIAL", BORDER + 74, botY + 12);
       
       // Border box around CONFIDENTIAL
       const labelGap = 100; // 增加間距值
@@ -812,14 +888,6 @@
       }
     });
 
-    document.getElementById('bgUpload').addEventListener('change', async (e) => {
-      if(e.target.files[0]) {
-        bgImg = await loadImage(e.target.files[0]);
-        setStatus("背景已載入");
-        requestRender();
-      }
-    });
-
     // Buttons
     document.getElementById('saveBtn').addEventListener('click', () => {
       setStatus("儲存 PNG 中...");
@@ -849,7 +917,6 @@
       document.getElementById('portraitUpload').value = "";
       document.getElementById('bgUpload').value = "";
       portraitImg = null;
-      bgImg = null;
       
       // Reset chips
       personChips.forEach(c => c.classList.remove('active'));
