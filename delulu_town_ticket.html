@@ -1,0 +1,862 @@
+<!doctype html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Delulu Transit Ticket Maker</title>
+  <style>
+    :root {
+      --bg: #1a1a1a;
+      --panel: rgba(30, 30, 30, 0.95);
+      --panel-border: rgba(255,255,255,.1);
+      --text: #eef2ff;
+      --muted: #93a4be;
+      --shadow: 0 24px 60px rgba(0,0,0,.6);
+      --font: "Inter", "PingFang TC", "Microsoft JhengHei", "Noto Sans TC", sans-serif;
+      --sticky-top: 18px;
+      --panel-height: calc(100vh - 36px);
+      
+      /* Ticket Colors - Modern Default */
+      --ticket-bg: #fdfbf5;
+      --ticket-teal: #4ecdc4;
+      --ticket-red: #d92c2c;
+      --ticket-black: #111111;
+      --ticket-text: #111111;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      min-height: 100%;
+      font-family: var(--font);
+      color: var(--text);
+      background: linear-gradient(135deg, #121212, #1a1a1a 60%, #0a0a0a 100%);
+    }
+
+    .page {
+      max-width: 1420px;
+      margin: 0 auto;
+      padding: 28px 20px 40px;
+    }
+
+    .hero {
+      display: flex;
+      justify-content: space-between;
+      gap: 18px;
+      align-items: end;
+      margin-bottom: 22px;
+      flex-wrap: wrap;
+    }
+
+    .hero h1 {
+      margin: 0;
+      font-size: clamp(24px, 3vw, 36px);
+      font-weight: 900;
+      letter-spacing: 2px;
+      color: #fff;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(320px, 410px) minmax(380px, 1fr);
+      gap: 22px;
+      align-items: stretch;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--panel-border);
+      border-radius: 20px;
+      box-shadow: var(--shadow);
+    }
+
+    .controls {
+      padding: 20px;
+      position: sticky;
+      top: var(--sticky-top);
+      min-height: var(--panel-height);
+      max-height: var(--panel-height);
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(255,255,255,.2) transparent;
+    }
+
+    .controls::-webkit-scrollbar { width: 6px; }
+    .controls::-webkit-scrollbar-thumb { background: rgba(255,255,255,.2); border-radius: 10px; }
+
+    .panel-title {
+      margin: 0 0 16px;
+      font-size: 18px;
+      font-weight: 800;
+      border-bottom: 2px solid rgba(255,255,255,.1);
+      padding-bottom: 12px;
+    }
+
+    .section {
+      margin-bottom: 24px;
+    }
+
+    .section h3 {
+      margin: 0 0 12px;
+      font-size: 13px;
+      letter-spacing: 1px;
+      color: #a5b4fc;
+    }
+
+    .field { margin-bottom: 14px; }
+    .field label {
+      display: block;
+      font-size: 12px;
+      font-weight: 700;
+      color: #cbd5e1;
+      margin-bottom: 6px;
+    }
+
+    .hint {
+      margin-top: 4px;
+      font-size: 11px;
+      color: var(--muted);
+      line-height: 1.4;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    input[type="text"],
+    select,
+    textarea {
+      width: 100%;
+      border: 1px solid rgba(255,255,255,.2);
+      background: rgba(0, 0, 0, .4);
+      color: white;
+      border-radius: 8px;
+      padding: 10px 12px;
+      outline: none;
+      font-size: 14px;
+      font-family: var(--font);
+      transition: .2s ease;
+    }
+
+    input[type="text"]:focus, select:focus, textarea:focus {
+      border-color: #4ecdc4;
+      box-shadow: 0 0 0 3px rgba(78, 205, 196, .2);
+    }
+
+    textarea { min-height: 70px; resize: vertical; }
+    input[type="file"] { font-size: 12px; color: #94a3b8; }
+    input[type="range"] { width: 100%; accent-color: #4ecdc4; cursor: pointer; }
+
+    .range-row {
+      display: grid;
+      grid-template-columns: 1fr 40px;
+      gap: 10px;
+      align-items: center;
+    }
+    .range-value { font-size: 12px; font-weight: bold; text-align: right; }
+
+    /* Custom Chips for Buttons */
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .chip {
+      background: rgba(255,255,255,.05);
+      border: 1px solid rgba(255,255,255,.2);
+      color: #e2e8f0;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all .2s;
+    }
+    .chip:hover { background: rgba(255,255,255,.1); }
+    .chip.active {
+      background: #4ecdc4;
+      color: #000;
+      border-color: #4ecdc4;
+    }
+
+    .button-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    .btn {
+      border: none;
+      border-radius: 8px;
+      padding: 12px;
+      cursor: pointer;
+      color: white;
+      font-size: 13px;
+      font-weight: bold;
+      transition: opacity .2s;
+    }
+    .btn:hover { opacity: 0.9; }
+    .btn.primary { background: #d92c2c; }
+    .btn.secondary { background: #4ecdc4; color: #000; }
+    .btn.ghost { background: transparent; border: 1px solid rgba(255,255,255,.3); }
+
+    .status {
+      margin-top: 10px;
+      text-align: center;
+      font-size: 12px;
+      color: #4ecdc4;
+      min-height: 16px;
+    }
+
+    /* Preview Section */
+    .preview-panel {
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      background: repeating-linear-gradient(45deg, #1a1a1a, #1a1a1a 10px, #1e1e1e 10px, #1e1e1e 20px);
+    }
+
+    .preview-stage {
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      margin-top: 20px;
+    }
+
+    .preview-canvas {
+      width: 100%;
+      max-width: 920px;
+      height: auto;
+      border-radius: 4px;
+      box-shadow: 0 20px 50px rgba(0,0,0,.8);
+    }
+
+    @media (max-width: 900px) {
+      .layout { grid-template-columns: 1fr; }
+      .controls { position: static; max-height: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="hero">
+      <h1>迪露露客運 TRANSIT CO.</h1>
+    </div>
+
+    <div class="layout">
+      <aside class="panel controls">
+        <h2 class="panel-title">車票設定</h2>
+
+        <div class="section">
+          <h3>模式設定</h3>
+          <div class="grid-2">
+            <div class="field">
+              <label for="mode">註冊類型</label>
+              <select id="mode">
+                <option value="tourist">觀光客 (單程無返)</option>
+                <option value="resident">原居民 (居民通行)</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="visualTheme">視覺色調</label>
+              <select id="visualTheme">
+                <option value="modern">現代 (俐落)</option>
+                <option value="retro">復古 (泛黃)</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="section">
+          <h3>基本資訊</h3>
+          <div class="grid-2">
+            <div class="field">
+              <label for="primaryName">姓名 NAME</label>
+              <input id="primaryName" type="text" value="未知乘客" />
+            </div>
+            <div class="field">
+              <label for="age">年齡 AGE</label>
+              <input id="age" type="text" value="24" />
+            </div>
+            <div class="field">
+              <label for="ticketClass">票種 CLASS</label>
+              <input id="ticketClass" type="text" value="單程票 臥鋪" />
+            </div>
+            <div class="field">
+              <label for="time">時間 TIME</label>
+              <input id="time" type="text" value="00:13" />
+            </div>
+          </div>
+          <div class="field">
+            <label for="reason">原因 REASON</label>
+            <input id="reason" type="text" value="叔叔的推薦" />
+          </div>
+          
+          <div class="field">
+            <label>預計拜訪人物 VISITING</label>
+            <div class="chips" id="personChips">
+              <button class="chip active" data-person="安布拉">安布拉</button>
+              <button class="chip" data-person="帕奇">帕奇</button>
+              <button class="chip" data-person="賽拉斯">賽拉斯</button>
+              <button class="chip" data-person="洛肯">洛肯</button>
+              <button class="chip" data-person="哈瓦那">哈瓦那</button>
+            </div>
+            <input type="hidden" id="visitPerson" value="安布拉" />
+          </div>
+        </div>
+
+        <div class="section">
+          <h3>機密備註 (副券內容)</h3>
+          <div class="field">
+            <label for="secretTitle">標題 TITLE</label>
+            <input id="secretTitle" type="text" value="[ 特殊貨物清單 CARGO MANIFEST ]" />
+          </div>
+          <div class="field">
+            <label for="secretNote">內容 DESCRIPTION</label>
+            <textarea id="secretNote">該乘客具備「家族遺傳性泌乳」體質（無性別差異產乳），目前處於持續泌乳狀態</textarea>
+          </div>
+          <div class="field">
+            <label for="warningNote">警告標語 WARNING (紅字)</label>
+            <input id="warningNote" type="text" value="※ 運送注意：請勿刺破包裝。抵達後直接交予「麵包師」" />
+          </div>
+        </div>
+
+        <div class="section">
+          <h3>乘客肖像</h3>
+          <div class="field">
+            <label for="bgUpload">上傳背景 (選填)</label>
+            <input id="bgUpload" type="file" accept="image/*" />
+          </div>
+          <div class="field">
+            <label for="portraitUpload">上傳人物 PNG</label>
+            <input id="portraitUpload" type="file" accept="image/*" />
+          </div>
+          
+          <div class="grid-2" style="margin-top: 10px;">
+            <div class="field">
+              <label>左右 X</label>
+              <div class="range-row">
+                <input id="portraitX" type="range" min="-100" max="100" value="0" />
+                <span class="range-value" id="valX">0</span>
+              </div>
+            </div>
+            <div class="field">
+              <label>上下 Y</label>
+              <div class="range-row">
+                <input id="portraitY" type="range" min="-100" max="100" value="0" />
+                <span class="range-value" id="valY">0</span>
+              </div>
+            </div>
+            <div class="field">
+              <label>大小 Scale</label>
+              <div class="range-row">
+                <input id="portraitScale" type="range" min="30" max="200" value="100" />
+                <span class="range-value" id="valS">100</span>
+              </div>
+            </div>
+            <div class="field">
+              <label>透明度 Opacity</label>
+              <div class="range-row">
+                <input id="portraitOpacity" type="range" min="10" max="100" value="100" />
+                <span class="range-value" id="valO">100</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="button-row">
+          <button class="btn primary" id="saveBtn">儲存 PNG</button>
+          <button class="btn secondary" id="resetPortraitBtn">重設肖像</button>
+          <button class="btn ghost" id="resetAllBtn">全部重設</button>
+        </div>
+        <div class="status" id="status"></div>
+      </aside>
+
+      <section class="panel preview-panel">
+        <h2 class="panel-title" style="align-self: flex-start; color: #fff;">票卷預覽</h2>
+        <div class="preview-stage">
+          <canvas id="ticketCanvas" class="preview-canvas" width="920" height="640"></canvas>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <script>
+    const STORAGE_KEY = 'delulu_transit_ticket_v1';
+    
+    // UI Elements
+    const ids = [
+      'mode', 'visualTheme', 'primaryName', 'age', 'ticketClass', 'time', 'reason', 
+      'visitPerson', 'secretTitle', 'secretNote', 'warningNote',
+      'portraitX', 'portraitY', 'portraitScale', 'portraitOpacity'
+    ];
+    const elements = Object.fromEntries(ids.map(id => [id, document.getElementById(id)]));
+    const personChips = document.querySelectorAll('#personChips .chip');
+    
+    const canvas = document.getElementById('ticketCanvas');
+    const ctx = canvas.getContext('2d');
+    const statusEl = document.getElementById('status');
+
+    let portraitImg = null;
+    let bgImg = null;
+    let renderTimer = null;
+
+    // Constants for drawing
+    const W = 920;
+    const H = 640;
+    const BORDER = 8;
+    
+    // Format Text Lines
+    function wrapText(context, text, maxWidth) {
+      const words = text.split('');
+      const lines = [];
+      let currentLine = words[0] || '';
+
+      for (let i = 1; i < words.length; i++) {
+        const word = words[i];
+        const width = context.measureText(currentLine + word).width;
+        if (width < maxWidth) {
+          currentLine += word;
+        } else {
+          lines.push(currentLine);
+          currentLine = word;
+        }
+      }
+      lines.push(currentLine);
+      return lines;
+    }
+
+    // Set Status Message
+    function setStatus(msg) {
+      statusEl.textContent = msg;
+      setTimeout(() => statusEl.textContent = '', 2000);
+    }
+
+    // Load Image Promise
+    function loadImage(file) {
+      return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const img = new Image();
+          img.onload = () => resolve(img);
+          img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+
+    // Update Range Labels
+    function updateRangeLabels() {
+      document.getElementById('valX').textContent = elements.portraitX.value;
+      document.getElementById('valY').textContent = elements.portraitY.value;
+      document.getElementById('valS').textContent = elements.portraitScale.value + '%';
+      document.getElementById('valO').textContent = elements.portraitOpacity.value + '%';
+    }
+
+    // Main Draw Function
+    function drawTicket() {
+      // Clear
+      ctx.clearRect(0, 0, W, H);
+      
+      const theme = elements.visualTheme.value;
+      const isRetro = theme === 'retro';
+      
+      const bgColor = isRetro ? '#f4eedb' : '#fdfbf5';
+      const tealColor = isRetro ? '#4aa89e' : '#4ecdc4';
+      const redColor = isRetro ? '#c93434' : '#d92c2c';
+      const blackColor = '#111111';
+      const font = "'PingFang TC', 'Microsoft JhengHei', 'Noto Sans TC', sans-serif";
+
+      // 1. Background & Outer Border
+      ctx.fillStyle = bgColor;
+      ctx.fillRect(0, 0, W, H);
+      
+      ctx.lineWidth = BORDER;
+      ctx.strokeStyle = blackColor;
+      ctx.strokeRect(BORDER/2, BORDER/2, W - BORDER, H - BORDER);
+
+      // 2. Top Striped Border
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(BORDER, BORDER, W - BORDER*2, 14);
+      ctx.clip();
+      for (let i = -20; i < W; i += 30) {
+        ctx.fillStyle = redColor;
+        ctx.beginPath();
+        ctx.moveTo(i, BORDER);
+        ctx.lineTo(i + 15, BORDER);
+        ctx.lineTo(i + 5, BORDER + 14);
+        ctx.lineTo(i - 10, BORDER + 14);
+        ctx.fill();
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.moveTo(i + 15, BORDER);
+        ctx.lineTo(i + 30, BORDER);
+        ctx.lineTo(i + 20, BORDER + 14);
+        ctx.lineTo(i + 5, BORDER + 14);
+        ctx.fill();
+      }
+      ctx.restore();
+      ctx.fillStyle = blackColor;
+      ctx.fillRect(BORDER, BORDER + 14, W - BORDER*2, 4);
+
+      // 3. Header Text
+      ctx.fillStyle = blackColor;
+      ctx.font = `900 18px ${font}`;
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'middle';
+      ctx.fillText("迪露露客運 TRANSIT CO.", BORDER + 20, 50);
+      
+      ctx.fillStyle = redColor;
+      ctx.textAlign = 'right';
+      ctx.font = `900 20px "Courier New", monospace`;
+      // Generate a fake ticket number
+      ctx.fillText("No. 00013", W - BORDER - 20, 50);
+
+      // 4. Teal Route Section
+      const tealY = 75;
+      const tealH = 120;
+      ctx.fillStyle = tealColor;
+      ctx.fillRect(BORDER, tealY, W - BORDER*2, tealH);
+      ctx.fillStyle = blackColor;
+      ctx.fillRect(BORDER, tealY, W - BORDER*2, 4); // Top edge
+      ctx.fillRect(BORDER, tealY + tealH - 4, W - BORDER*2, 4); // Bottom edge
+
+      // Teal Text
+      ctx.fillStyle = '#ffffff';
+      ctx.font = `900 36px ${font}`;
+      ctx.textAlign = 'center';
+      // Black drop shadow for "0 號路線"
+      ctx.shadowColor = 'rgba(0,0,0,0.8)';
+      ctx.shadowOffsetX = 2; ctx.shadowOffsetY = 2; ctx.shadowBlur = 0;
+      ctx.fillText("0 號路線 ROUTE 0", W / 2, tealY + 45);
+      ctx.shadowColor = 'transparent';
+
+      // Midnight Express Pill
+      const pillW = 280;
+      const pillH = 34;
+      const pillX = (W - pillW) / 2;
+      const pillY = tealY + 70;
+      ctx.fillStyle = blackColor;
+      ctx.fillRect(pillX, pillY, pillW, pillH);
+      ctx.fillStyle = '#ffffff';
+      ctx.font = `900 16px ${font}`;
+      ctx.letterSpacing = "2px";
+      ctx.fillText("午夜末班車 MIDNIGHT EXPRESS", W / 2, pillY + pillH/2);
+      ctx.letterSpacing = "0px";
+
+      // 5. Passenger Area
+      const passY = tealY + tealH + 20; // 215
+      
+      // Portrait Box
+      const portX = BORDER + 20;
+      const portY = passY;
+      const portW = 140;
+      const portH = 170;
+      
+      ctx.fillStyle = isRetro ? '#e0d8c8' : '#e5e5e5'; // default box bg
+      ctx.fillRect(portX, portY, portW, portH);
+      ctx.lineWidth = 4;
+      ctx.strokeStyle = blackColor;
+      ctx.strokeRect(portX, portY, portW, portH);
+
+      // Draw Portrait
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(portX+2, portY+2, portW-4, portH-4);
+      ctx.clip();
+      
+      if (bgImg) {
+        // center crop bg
+        const ratio = Math.max(portW / bgImg.width, portH / bgImg.height);
+        ctx.drawImage(bgImg, portX + (portW - bgImg.width*ratio)/2, portY + (portH - bgImg.height*ratio)/2, bgImg.width*ratio, bgImg.height*ratio);
+      }
+
+      if (portraitImg) {
+        const s = elements.portraitScale.value / 100;
+        const px = elements.portraitX.value * 1;
+        const py = elements.portraitY.value * 1;
+        const baseW = portW * 0.9 * s;
+        const baseH = (portraitImg.height / portraitImg.width) * baseW;
+        ctx.globalAlpha = elements.portraitOpacity.value / 100;
+        ctx.drawImage(portraitImg, portX + portW/2 - baseW/2 + px, portY + portH - baseH + py, baseW, baseH);
+        ctx.globalAlpha = 1.0;
+      }
+      ctx.restore();
+
+      // Portrait Bottom Label
+      ctx.fillStyle = blackColor;
+      ctx.fillRect(portX, portY + portH - 35, portW, 35);
+      ctx.fillStyle = tealColor;
+      ctx.font = `900 14px "Courier New", monospace`;
+      ctx.textAlign = 'center';
+      ctx.fillText("PASSENGER", portX + portW/2, portY + portH - 17);
+
+      // Info Fields
+      const infoX = portX + portW + 30;
+      const infoRight = W - BORDER - 30;
+      const startY = passY + 10;
+      const lineSpacing = 32;
+
+      const fields = [
+        { label: "姓名 NAME", val: elements.primaryName.value },
+        { label: "年齡 AGE", val: elements.age.value },
+        { label: "票種 CLASS", val: elements.ticketClass.value },
+        { label: "原因 REASON", val: elements.reason.value },
+        { label: "拜訪人物 VISITING", val: elements.visitPerson.value },
+        { label: "時間 TIME", val: elements.time.value }
+      ];
+
+      ctx.textAlign = 'left';
+      fields.forEach((f, i) => {
+        const y = startY + (i * lineSpacing);
+        
+        // Label
+        ctx.fillStyle = blackColor;
+        ctx.font = `900 14px ${font}`;
+        let labelText = f.label.split(' ')[0];
+        let subText = f.label.split(' ')[1];
+        ctx.fillText(labelText, infoX, y);
+        ctx.fillStyle = redColor;
+        ctx.fillText(" " + subText, infoX + ctx.measureText(labelText).width, y);
+        
+        // Value
+        ctx.fillStyle = blackColor;
+        ctx.font = `900 15px ${font}`;
+        ctx.textAlign = 'right';
+        ctx.fillText(f.val, infoRight, y);
+        ctx.textAlign = 'left'; // reset
+
+        // Dotted Line
+        const labelW = ctx.measureText(f.label).width;
+        const valW = ctx.measureText(f.val).width;
+        
+        ctx.beginPath();
+        ctx.setLineDash([3, 4]);
+        ctx.moveTo(infoX + labelW + 15, y + 5);
+        ctx.lineTo(infoRight - valW - 15, y + 5);
+        ctx.strokeStyle = '#666';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+        ctx.setLineDash([]);
+      });
+
+      // Stamp
+      ctx.save();
+      ctx.translate(W - 140, passY + 30);
+      ctx.rotate(-0.05); // slight rotation
+      ctx.strokeStyle = redColor;
+      ctx.lineWidth = 3;
+      ctx.strokeRect(-80, -25, 160, 50);
+      
+      // Stamp Inner Border
+      ctx.lineWidth = 1;
+      ctx.strokeRect(-76, -21, 152, 42);
+
+      ctx.fillStyle = redColor;
+      ctx.textAlign = 'center';
+      
+      // Logic for Stamp text based on Mode
+      const isResident = elements.mode.value === 'resident';
+      const stampT1 = isResident ? "居民通行" : "單程無返";
+      const stampT2 = isResident ? "RESIDENT" : "NO RETURN";
+
+      ctx.font = `900 20px ${font}`;
+      ctx.fillText(stampT1, 0, -2);
+      ctx.font = `900 12px "Courier New", monospace`;
+      ctx.fillText(stampT2, 0, 14);
+      
+      // If retro, draw some faded noise over stamp
+      if (isRetro) {
+        ctx.globalAlpha = 0.3;
+        ctx.fillStyle = bgColor;
+        for(let j=0; j<20; j++) {
+           ctx.beginPath();
+           ctx.arc((Math.random()-0.5)*150, (Math.random()-0.5)*40, Math.random()*3, 0, Math.PI*2);
+           ctx.fill();
+        }
+      }
+      ctx.restore();
+
+      // 6. Tear-off Divider
+      const divY = 430;
+      ctx.fillStyle = blackColor;
+      ctx.fillRect(BORDER, divY - 2, W - BORDER*2, 4); // solid line behind dashes for retro look
+      
+      // Dashes
+      ctx.beginPath();
+      ctx.setLineDash([12, 12]);
+      ctx.moveTo(BORDER, divY);
+      ctx.lineTo(W - BORDER, divY);
+      ctx.strokeStyle = bgColor; // cut out dashes in bg color
+      ctx.lineWidth = 6;
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // Semicircles (Punch holes)
+      ctx.fillStyle = blackColor;
+      ctx.beginPath();
+      ctx.arc(BORDER, divY, 14, -Math.PI/2, Math.PI/2, false);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(W - BORDER, divY, 14, Math.PI/2, -Math.PI/2, false);
+      ctx.fill();
+
+      // 7. Bottom Section (Confidential)
+      const botY = divY + 30;
+      
+      // Red Pill "副券"
+      ctx.fillStyle = redColor;
+      ctx.fillRect(BORDER + 20, botY, 44, 24);
+      ctx.fillStyle = '#ffffff';
+      ctx.textAlign = 'center';
+      ctx.font = `900 14px ${font}`;
+      ctx.fillText("副券", BORDER + 42, botY + 12);
+      
+      // Text next to pill
+      ctx.fillStyle = redColor;
+      ctx.textAlign = 'left';
+      ctx.fillText("車掌機密備註 CONFIDENTIAL", BORDER + 74, botY + 12);
+      
+      // Border box around CONFIDENTIAL
+      ctx.strokeStyle = blackColor;
+      ctx.lineWidth = 2;
+      ctx.strokeRect(BORDER + 70 + ctx.measureText("車掌機密備註 ").width, botY-2, ctx.measureText("CONFIDENTIAL").width + 10, 28);
+      ctx.fillStyle = blackColor;
+      ctx.fillText("CONFIDENTIAL", BORDER + 75 + ctx.measureText("車掌機密備註 ").width, botY + 12);
+
+      // Secret Text
+      ctx.fillStyle = blackColor;
+      ctx.font = `900 14px ${font}`;
+      ctx.fillText(elements.secretTitle.value, BORDER + 20, botY + 45);
+      
+      ctx.font = `700 13px ${font}`;
+      const noteLines = wrapText(ctx, elements.secretNote.value, W - BORDER*2 - 40);
+      noteLines.forEach((line, i) => {
+        ctx.fillText(line, BORDER + 20, botY + 68 + (i * 20));
+      });
+
+      // Warning text
+      ctx.fillStyle = redColor;
+      ctx.font = `900 13px ${font}`;
+      ctx.fillText(elements.warningNote.value, BORDER + 20, botY + 68 + (noteLines.length * 20) + 10);
+
+      // 8. Barcode
+      const barY = H - BORDER - 50;
+      const barH = 35;
+      ctx.fillStyle = blackColor;
+      // Simple random-looking barcode pattern based on fixed seed
+      const barcodeData = [3,1,1,2,3,2,1,1,4,1,2,2,1,3,1,1,2,1,4,1,2,1,1,3,2,1,1,2,3,1,1,4,1,2,1,3];
+      let bx = BORDER + 20;
+      for (let i=0; i<80; i++) {
+        const w = barcodeData[i % barcodeData.length] * 1.5;
+        if (i % 2 === 0) {
+          ctx.fillRect(bx, barY, w, barH);
+        }
+        bx += w;
+        if (bx > W - BORDER - 20) break;
+      }
+
+      // Add retro noise overlay
+      if (isRetro) {
+        ctx.fillStyle = 'rgba(139, 69, 19, 0.04)'; // faint brown
+        ctx.fillRect(0, 0, W, H);
+      }
+    }
+
+    // Trigger Render
+    function requestRender() {
+      if(renderTimer) clearTimeout(renderTimer);
+      renderTimer = setTimeout(() => {
+        updateRangeLabels();
+        drawTicket();
+      }, 50);
+    }
+
+    // Init & Listeners
+    ids.forEach(id => {
+      elements[id].addEventListener('input', requestRender);
+      elements[id].addEventListener('change', requestRender);
+    });
+
+    // Chip logic
+    personChips.forEach(chip => {
+      chip.addEventListener('click', () => {
+        personChips.forEach(c => c.classList.remove('active'));
+        chip.classList.add('active');
+        elements.visitPerson.value = chip.dataset.person;
+        requestRender();
+      });
+    });
+
+    // Image Uploads
+    document.getElementById('portraitUpload').addEventListener('change', async (e) => {
+      if(e.target.files[0]) {
+        portraitImg = await loadImage(e.target.files[0]);
+        setStatus("肖像已載入");
+        requestRender();
+      }
+    });
+
+    document.getElementById('bgUpload').addEventListener('change', async (e) => {
+      if(e.target.files[0]) {
+        bgImg = await loadImage(e.target.files[0]);
+        setStatus("背景已載入");
+        requestRender();
+      }
+    });
+
+    // Buttons
+    document.getElementById('saveBtn').addEventListener('click', () => {
+      setStatus("儲存 PNG 中...");
+      const link = document.createElement('a');
+      link.download = `transit-ticket-${Date.now()}.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+      setStatus("儲存成功");
+    });
+
+    document.getElementById('resetPortraitBtn').addEventListener('click', () => {
+      elements.portraitX.value = 0;
+      elements.portraitY.value = 0;
+      elements.portraitScale.value = 100;
+      elements.portraitOpacity.value = 100;
+      requestRender();
+    });
+
+    document.getElementById('resetAllBtn').addEventListener('click', () => {
+      document.getElementById('primaryName').value = "未知乘客";
+      document.getElementById('age').value = "24";
+      document.getElementById('ticketClass').value = "單程票 臥鋪";
+      document.getElementById('reason').value = "叔叔的推薦";
+      document.getElementById('time').value = "00:13";
+      document.getElementById('mode').value = "tourist";
+      document.getElementById('visualTheme').value = "modern";
+      document.getElementById('portraitUpload').value = "";
+      document.getElementById('bgUpload').value = "";
+      portraitImg = null;
+      bgImg = null;
+      
+      // Reset chips
+      personChips.forEach(c => c.classList.remove('active'));
+      personChips[0].classList.add('active');
+      elements.visitPerson.value = "安布拉";
+      
+      document.getElementById('resetPortraitBtn').click();
+      requestRender();
+    });
+
+    // Font Loading check to ensure Canvas draws with correct font
+    document.fonts.ready.then(() => {
+      drawTicket();
+      updateRangeLabels();
+    });
+  </script>
+</body>
+</html>
