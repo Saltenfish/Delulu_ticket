@@ -246,7 +246,7 @@
 <body>
   <div class="page">
     <div class="hero">
-      <h1>迪露露客運 TRANSIT CO.</h1>
+      <h1>迪露露客運 DELULU TRANSIT.CO</h1>
     </div>
 
     <div class="layout">
@@ -511,7 +511,7 @@
       ctx.font = `900 18px ${font}`;
       ctx.textAlign = 'left';
       ctx.textBaseline = 'middle';
-      ctx.fillText("迪露露客運 TRANSIT CO.", BORDER + 20, 50);
+      ctx.fillText("迪露露客運 DELULU TRANSIT.CO", BORDER + 20, 50);
       
       ctx.fillStyle = redColor;
       ctx.textAlign = 'right';
@@ -539,16 +539,18 @@
       ctx.shadowColor = 'transparent';
 
       // Midnight Express Pill
-      const pillW = 280;
+      const pillW = 480; // 寬度從 280 增加到 400，讓框更長不卡邊
       const pillH = 34;
       const pillX = (W - pillW) / 2;
       const pillY = tealY + 70;
       ctx.fillStyle = blackColor;
       ctx.fillRect(pillX, pillY, pillW, pillH);
+
       ctx.fillStyle = '#ffffff';
       ctx.font = `900 16px ${font}`;
       ctx.letterSpacing = "2px";
-      ctx.fillText("午夜末班車 MIDNIGHT EXPRESS", W / 2, pillY + pillH/2);
+      // 覆蓋下面這一行文字內容
+      ctx.fillText("小鎮最好的客運 THE TOWN'S BEST TRANSIT", W / 2, pillY + pillH/2);
       ctx.letterSpacing = "0px";
 
       // 5. Passenger Area
@@ -722,14 +724,19 @@
       // Text next to pill
       ctx.fillStyle = redColor;
       ctx.textAlign = 'left';
-      ctx.fillText("車掌機密備註 CONFIDENTIAL", BORDER + 74, botY + 12);
+      ctx.fillText("車掌機密備註         CONFIDENTIAL", BORDER + 74, botY + 12);
       
       // Border box around CONFIDENTIAL
+      const labelGap = 100; // 增加間距值
+      const textWidth = ctx.measureText("車掌機密備註 ").width;
+      const confX = BORDER + labelGap + textWidth; // 起始位置往右偏
+
       ctx.strokeStyle = blackColor;
       ctx.lineWidth = 2;
-      ctx.strokeRect(BORDER + 70 + ctx.measureText("車掌機密備註 ").width, botY-2, ctx.measureText("CONFIDENTIAL").width + 10, 28);
+      // 覆蓋外框與文字位置
+      ctx.strokeRect(confX, botY - 2, ctx.measureText("CONFIDENTIAL").width + 10, 28);
       ctx.fillStyle = blackColor;
-      ctx.fillText("CONFIDENTIAL", BORDER + 75 + ctx.measureText("車掌機密備註 ").width, botY + 12);
+      ctx.fillText("CONFIDENTIAL", confX + 5, botY + 12);
 
       // Secret Text
       ctx.fillStyle = blackColor;
