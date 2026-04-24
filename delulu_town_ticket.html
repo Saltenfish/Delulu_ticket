@@ -168,7 +168,7 @@
       width: 26px;
       height: 26px;
       border-radius: 50%;
-      background-image: url('2.png'); /* 你的圖片檔名 */
+      background-image: url('2.jpg'); /* 你的圖片檔名 */
       background-size: cover;
       background-position: center;
       border: 2px solid #fff;
@@ -319,6 +319,8 @@
               <select id="visualTheme">
                 <option value="modern">現代 (俐落)</option>
                 <option value="retro">復古 (泛黃)</option>
+                <option value="cyber">電馭 (霓虹深色)</option>
+                <option value="psychedelic">迷幻彩虹 (淡色系)</option>
               </select>
             </div>
           </div>
@@ -469,11 +471,27 @@
 
     let portraitImg = null;
     let renderTimer = null;
+    let charQImg = null;
 
     // Constants for drawing
     const W = 920;
     const H = 640;
     const BORDER = 8;
+    
+    // --- 新增：高清解析度設定 ---
+    const SCALE = 2; // 2 倍高清輸出 (輸出的圖片會變成 1840 x 1280)
+    
+    // 將畫布的實際像素放大
+    canvas.width = W * SCALE;
+    canvas.height = H * SCALE;
+    
+    // 將繪圖座標系等比例放大，這樣底下的 code 都不用改！
+    ctx.scale(SCALE, SCALE);
+    
+    // 啟用高品質圖片平滑處理，確保 Q 圖跟頭貼縮放時不會有鋸齒
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
+    // -------------------------
     
     // Format Text Lines
     function wrapText(context, text, maxWidth) {
@@ -530,19 +548,37 @@
       const theme = elements.visualTheme.value;
       const isRetro = theme === 'retro';
       
-      const bgColor = isRetro ? '#f4eedb' : '#fdfbf5';
-      const tealColor = isRetro ? '#4aa89e' : '#4ecdc4';
-      const redColor = isRetro ? '#c93434' : '#d92c2c';
-      const blackColor = '#111111';
+      let bgColor, tealColor, redColor, blackColor;
       const font = "'PingFang TC', 'Microsoft JhengHei', 'Noto Sans TC', sans-serif";
+      
+      // 根據選定主題設定顏色
+      if (theme === 'modern') {
+        bgColor = '#fdfbf5'; tealColor = '#4ecdc4'; redColor = '#d92c2c'; blackColor = '#111111';
+      } else if (theme === 'retro') {
+        bgColor = '#f4eedb'; tealColor = '#4aa89e'; redColor = '#c93434'; blackColor = '#111111';
+      } else if (theme === 'cyber') {
+        bgColor = '#0d0d15'; tealColor = '#00f2fe'; redColor = '#ff0055'; blackColor = '#ffffff';
+      } else if (theme === 'psychedelic') {
+        bgColor = '#ffffff'; // 預設白，後面會繪製漸層
+        tealColor = '#bae6fd'; // 淡天藍
+        redColor = '#fbcfe8';  // 淡粉紅
+        blackColor = '#475569'; // 深灰藍，比起純黑更溫柔
+      }
 
       // 1. Background & Outer Border
-      ctx.fillStyle = bgColor;
+      if (theme === 'psychedelic') {
+        // 迷幻彩虹專屬：對角線淡色漸層背景
+        const grad = ctx.createLinearGradient(0, 0, W, H);
+        grad.addColorStop(0, '#fce7f3'); // 淡粉
+        grad.addColorStop(0.25, '#e0f2fe'); // 淡藍
+        grad.addColorStop(0.5, '#fef9c3'); // 淡黃
+        grad.addColorStop(0.75, '#ecfccb'); // 淡綠
+        grad.addColorStop(1, '#ede9fe'); // 淡紫
+        ctx.fillStyle = grad;
+      } else {
+        ctx.fillStyle = bgColor;
+      }
       ctx.fillRect(0, 0, W, H);
-      
-      ctx.lineWidth = BORDER;
-      ctx.strokeStyle = blackColor;
-      ctx.strokeRect(BORDER/2, BORDER/2, W - BORDER, H - BORDER);
 
       // 2. Top Striped Border
       ctx.save();
@@ -801,7 +837,7 @@
       // Text next to pill
       ctx.fillStyle = redColor;
       ctx.textAlign = 'left';
-      ctx.fillText("車掌機密備註         CONFIDENTIAL", BORDER + 74, botY + 12);
+      ctx.fillText("車掌機密備註        CONFIDENTIAL", BORDER + 74, botY + 12);
       
       // Border box around CONFIDENTIAL
       const labelGap = 100; // 增加間距值
@@ -846,6 +882,32 @@
         bx += w;
         if (bx > W - BORDER - 20) break;
       }
+      
+      // 9. Character Q-Icon (右下角裝飾圖)
+      if (charQImg) {
+        ctx.save();
+        
+        // 設定圖片顯示的「基準寬度」
+        const qW = 110; 
+        
+        // 自動依照 768x1280 的比例去計算高度，保證圖片絕對高清且不變形
+        const ratio = charQImg.height / charQImg.width;
+        const qH = qW * ratio; 
+        
+        // 調整位置：X 靠右，Y 依照算出來的實際高度往上推，避免超出底部邊框
+        const qX = W - BORDER - 150; 
+        const qY = H - BORDER - qH - 10; 
+        
+        // 增加一點點旋轉感
+        ctx.translate(qX + qW/2, qY + qH/2);
+        ctx.rotate(0.08); 
+        
+        // 畫出完美比例的圖
+        ctx.drawImage(charQImg, -qW/2, -qH/2, qW, qH);
+        ctx.restore();
+      }
+
+
 
       // Add retro noise overlay
       if (isRetro) {
@@ -874,7 +936,23 @@
       chip.addEventListener('click', () => {
         personChips.forEach(c => c.classList.remove('active'));
         chip.classList.add('active');
-        elements.visitPerson.value = chip.dataset.person;
+        const personName = chip.dataset.person;
+        elements.visitPerson.value = personName;
+
+        // --- 新增：載入 Q 版角色圖 ---
+        const img = new Image();
+        img.onload = () => {
+          charQImg = img;
+          requestRender();
+        };
+        img.onerror = () => {
+          charQImg = null; // 如果沒圖就不顯示
+          requestRender();
+        };
+        // 這裡路徑設為 pic/角色名.png
+        img.src = `pic/${personName}.png`; 
+        // --------------------------
+
         requestRender();
       });
     });
@@ -931,6 +1009,12 @@
     document.fonts.ready.then(() => {
       drawTicket();
       updateRangeLabels();
+      
+      // 網頁載入時，自動點擊預設的「安布拉」按鈕來載入圖片
+      const defaultActiveChip = document.querySelector('#personChips .chip.active');
+      if (defaultActiveChip) {
+        defaultActiveChip.click();
+      }
     });
   </script>
 </body>
